@@ -1,6 +1,7 @@
 package com.tom_e_white;
 
 import java.util.List;
+import java.util.Set;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
@@ -27,8 +28,8 @@ public class Graph {
 
     System.out.println(g);
 
-    ConnectivityInspector connectivityInspector = new ConnectivityInspector(g);
-    List connectedSets = connectivityInspector.connectedSets();
+    ConnectivityInspector<String, DefaultEdge> connectivityInspector = new ConnectivityInspector<String, DefaultEdge>(g);
+    List<Set<String>> connectedSets = connectivityInspector.connectedSets();
 
     System.out.println(connectedSets);
 
