@@ -1,6 +1,5 @@
 package com.tom_e_white;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -22,67 +21,39 @@ import org.jgrapht.graph.SimpleGraph;
 public class Graph {
 
   public static void main(String[] args) {
-    Collection<List<Character>> permutations = Collections2.permutations(ImmutableList.of('A', 'C', 'G', 'T'));
-    System.out.println("Num perms: " + Iterables.size(permutations));
-    final List<Character> perm = Iterables.get(permutations, 7); // TODO: look through all of them!
+    Collection<List<Character>> basePermutations =
+        Collections2.permutations(ImmutableList.of('A', 'C', 'G', 'T'));
+    System.out.println("Num perms: " + Iterables.size(basePermutations));
+    final List<Character> bases = Iterables.get(basePermutations, 7); // TODO: look through all of them!
 
     // map from single letter amino acid code to codons
     Multimap<Character, String> gc = theGeneticCode();
     System.out.println(gc);
 
     // turn codons into points
-    Multimap<Character, Point> aminoToPoints = Multimaps.transformValues(gc, new
-        Function<String, Point>() {
-      public Point apply(String code) {
-        return new Point(lookup(code.charAt(0), perm), lookup(code.charAt(1), perm), lookup
-            (code.charAt(2), perm));
-      }
-    });
+    Multimap<Character, Point> aminoToPoints =
+        Multimaps.transformValues(gc, codon -> codonToPoint(codon, bases));
     System.out.println(aminoToPoints);
 
     // turn points for each amino acid into pairs
-    Map<Character, Iterable<Set<Point>>> aminoToPairs = Maps.transformValues(aminoToPoints.asMap(), new Function<Collection<Point>, Iterable<Set<Point>>>() {
-      public Iterable<Set<Point>> apply(Collection<Point> points) {
-        return pairs(points);
-      }
-    });
+    Map<Character, Iterable<Set<Point>>> aminoToPairs =
+        Maps.transformValues(aminoToPoints.asMap(), Graph::pairs);
     System.out.println(aminoToPairs);
 
     // determine if points within each pair are connected, or not, based on distance;
     // and build a graph
     Map<Character, UndirectedGraph<Point, DefaultEdge>> aminoToGraph =
-        Maps.transformValues(aminoToPairs, new Function<Iterable<Set<Point>>,
-            UndirectedGraph<Point, DefaultEdge>>() {
-      public UndirectedGraph<Point, DefaultEdge> apply(Iterable<Set<Point>> sets) {
-        UndirectedGraph<Point, DefaultEdge> g =
-            new SimpleGraph<Point, DefaultEdge>(DefaultEdge.class);
-        for (Set<Point> pair : sets) {
-          Point p1 = Iterables.get(pair, 0);
-          Point p2 = Iterables.get(pair, 1);
-          g.addVertex(p1);
-          g.addVertex(p2);
-          if (p1.distance(p2) <= 1) {
-            g.addEdge(p1, p2);
-          }
-        }
-        return g;
-      }
-    });
+        Maps.transformValues(aminoToPairs, Graph::makeGraph);
     System.out.println(aminoToGraph);
 
-    // find number of connected components
-    Map<Character, Integer> aminoToNumComponents = Maps.transformValues(aminoToGraph,
-        new Function<UndirectedGraph<Point, DefaultEdge>, Integer>() {
-      public Integer apply(UndirectedGraph<Point, DefaultEdge> g) {
-        return new ConnectivityInspector<Point, DefaultEdge>(g).connectedSets().size();
-      }
-    });
+    // find number of connected components for each amino acid
+    Map<Character, Integer> aminoToNumComponents =
+        Maps.transformValues(aminoToGraph, Graph::numComponents);
     System.out.println(aminoToNumComponents);
 
-  }
-
-  private static int lookup(char code, List<Character> perm) {
-    return perm.indexOf(code);
+    // find total number of connected components
+    int totalComponents = aminoToNumComponents.values().stream().mapToInt(i -> i).sum();
+    System.out.println("Total components: " + totalComponents);
   }
 
   private static Multimap<Character, String> theGeneticCode() {
@@ -93,8 +64,18 @@ public class Graph {
     return mm;
   }
 
+  private static Point codonToPoint(String codon, List<Character> bases) {
+    return new Point(lookup(codon.charAt(0), bases),
+        lookup(codon.charAt(1), bases),
+        lookup(codon.charAt(2), bases));
+  }
+
+  private static int lookup(char code, List<Character> perm) {
+    return perm.indexOf(code);
+  }
+
   private static <T> Iterable<Set<T>> pairs(Iterable<T> collection) {
-    Set<Set<T>> p = new LinkedHashSet<Set<T>>();
+    Set<Set<T>> p = new LinkedHashSet<>();
     for (T e1 : collection) {
       for (T e2 : collection) {
         if (e1.equals(e2)) {
@@ -105,6 +86,24 @@ public class Graph {
       }
     }
     return p;
+  }
+
+  private static UndirectedGraph<Point, DefaultEdge> makeGraph(Iterable<Set<Point>> pairs) {
+    UndirectedGraph<Point, DefaultEdge> g = new SimpleGraph<>(DefaultEdge.class);
+    for (Set<Point> pair : pairs) {
+      Point p1 = Iterables.get(pair, 0);
+      Point p2 = Iterables.get(pair, 1);
+      g.addVertex(p1);
+      g.addVertex(p2);
+      if (p1.distance(p2) <= 1) {
+        g.addEdge(p1, p2);
+      }
+    }
+    return g;
+  }
+
+  private static Integer numComponents(UndirectedGraph<Point, DefaultEdge> graph) {
+    return new ConnectivityInspector<>(graph).connectedSets().size();
   }
 
   static class Point {
