@@ -24,6 +24,15 @@ public class Graph {
     Collection<List<Character>> basePermutations =
         Collections2.permutations(ImmutableList.of('A', 'C', 'G', 'T'));
     System.out.println("Num perms: " + Iterables.size(basePermutations));
+    // TODO: 3-nested loop over basePermutations
+    for (List<Character> bases1 : basePermutations) {
+      for (List<Character> bases2 : basePermutations) {
+        for (List<Character> bases3 : basePermutations) {
+
+        }
+      }
+    }
+
     final List<Character> bases = Iterables.get(basePermutations, 7); // TODO: look through all of them!
 
     // map from single letter amino acid code to codons
@@ -35,15 +44,10 @@ public class Graph {
         Multimaps.transformValues(gc, codon -> codonToPoint(codon, bases));
     System.out.println(aminoToPoints);
 
-    // turn points for each amino acid into pairs
-    Map<Character, Iterable<Set<Point>>> aminoToPairs =
-        Maps.transformValues(aminoToPoints.asMap(), Graph::pairs);
-    System.out.println(aminoToPairs);
-
     // determine if points within each pair are connected, or not, based on distance;
     // and build a graph
     Map<Character, UndirectedGraph<Point, DefaultEdge>> aminoToGraph =
-        Maps.transformValues(aminoToPairs, Graph::makeGraph);
+        Maps.transformValues(aminoToPoints.asMap(), Graph::makeGraph);
     System.out.println(aminoToGraph);
 
     // find number of connected components for each amino acid
@@ -60,7 +64,27 @@ public class Graph {
     Multimap<Character, String> mm = LinkedListMultimap.create();
     mm.putAll('A', ImmutableList.of("GCA", "GCC", "GCG", "GCT"));
     mm.putAll('B', ImmutableList.of("AAC", "AAT", "GAC", "GAT"));
+    mm.putAll('C', ImmutableList.of("TGC", "TGT"));
+    mm.putAll('D', ImmutableList.of("GAC", "GAT"));
+    mm.putAll('E', ImmutableList.of("GAA", "GAG"));
+    mm.putAll('F', ImmutableList.of("TTC", "TTT"));
+    mm.putAll('G', ImmutableList.of("GGA", "GGC", "GGG", "GGT"));
+    mm.putAll('H', ImmutableList.of("CAC", "CAT"));
+    mm.putAll('I', ImmutableList.of("ATA", "ATC", "ATT"));
+    mm.putAll('K', ImmutableList.of("AAA", "AAG"));
+    mm.putAll('L', ImmutableList.of("CTA", "CTC", "CTG", "CTT", "TTA", "TTG"));
+    mm.putAll('M', ImmutableList.of("ATG"));
+    mm.putAll('N', ImmutableList.of("AAC", "AAT"));
+    mm.putAll('P', ImmutableList.of("CCA", "CCC", "CCG", "CCT"));
+    mm.putAll('Q', ImmutableList.of("CAA", "CAG"));
+    mm.putAll('R', ImmutableList.of("AGA", "AGG", "CGA", "CGC", "CGG", "CGT"));
     mm.putAll('S', ImmutableList.of("AGC", "AGT", "TCA", "TCC", "TCG", "TCT"));
+    mm.putAll('T', ImmutableList.of("ACA", "ACC", "ACG", "ACT"));
+    mm.putAll('V', ImmutableList.of("GTA", "GTC", "GTG", "GTT"));
+    mm.putAll('W', ImmutableList.of("TGG"));
+    mm.putAll('Y', ImmutableList.of("TAC", "TAT"));
+    mm.putAll('Z', ImmutableList.of("CAA", "CAG", "GAA", "GAG"));
+    mm.putAll('*', ImmutableList.of("TAA", "TAG", "TGA"));
     return mm;
   }
 
@@ -88,13 +112,14 @@ public class Graph {
     return p;
   }
 
-  private static UndirectedGraph<Point, DefaultEdge> makeGraph(Iterable<Set<Point>> pairs) {
+  private static UndirectedGraph<Point, DefaultEdge> makeGraph(Iterable<Point> points) {
     UndirectedGraph<Point, DefaultEdge> g = new SimpleGraph<>(DefaultEdge.class);
-    for (Set<Point> pair : pairs) {
+    for (Point point : points) {
+      g.addVertex(point);
+    }
+    for (Set<Point> pair : pairs(points)) {
       Point p1 = Iterables.get(pair, 0);
       Point p2 = Iterables.get(pair, 1);
-      g.addVertex(p1);
-      g.addVertex(p2);
       if (p1.distance(p2) <= 1) {
         g.addEdge(p1, p2);
       }
