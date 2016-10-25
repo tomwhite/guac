@@ -63,7 +63,6 @@ public class Graph {
   private static Multimap<Character, String> theGeneticCode() {
     Multimap<Character, String> mm = LinkedListMultimap.create();
     mm.putAll('A', ImmutableList.of("GCA", "GCC", "GCG", "GCT"));
-    mm.putAll('B', ImmutableList.of("AAC", "AAT", "GAC", "GAT"));
     mm.putAll('C', ImmutableList.of("TGC", "TGT"));
     mm.putAll('D', ImmutableList.of("GAC", "GAT"));
     mm.putAll('E', ImmutableList.of("GAA", "GAG"));
@@ -83,7 +82,6 @@ public class Graph {
     mm.putAll('V', ImmutableList.of("GTA", "GTC", "GTG", "GTT"));
     mm.putAll('W', ImmutableList.of("TGG"));
     mm.putAll('Y', ImmutableList.of("TAC", "TAT"));
-    mm.putAll('Z', ImmutableList.of("CAA", "CAG", "GAA", "GAG"));
     mm.putAll('*', ImmutableList.of("TAA", "TAG", "TGA"));
     return mm;
   }
