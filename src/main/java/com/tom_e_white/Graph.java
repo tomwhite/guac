@@ -23,41 +23,49 @@ public class Graph {
   public static void main(String[] args) {
     Collection<List<Character>> basePermutations =
         Collections2.permutations(ImmutableList.of('A', 'C', 'G', 'T'));
-    System.out.println("Num perms: " + Iterables.size(basePermutations));
-    // TODO: 3-nested loop over basePermutations
+
+    int minComponents = Integer.MAX_VALUE;
     for (List<Character> bases1 : basePermutations) {
       for (List<Character> bases2 : basePermutations) {
         for (List<Character> bases3 : basePermutations) {
-
+          int numComponents = computeNumberOfComponents(bases1, bases2, bases3);
+          minComponents = Math.min(minComponents, numComponents);
         }
       }
     }
+    System.out.println(minComponents);
+  }
 
-    final List<Character> bases = Iterables.get(basePermutations, 7); // TODO: look through all of them!
+  private static int computeNumberOfComponents(List<Character> bases1,
+      List<Character> bases2, List<Character> bases3) {
 
     // map from single letter amino acid code to codons
     Multimap<Character, String> gc = theGeneticCode();
-    System.out.println(gc);
+    //System.out.println(gc);
 
     // turn codons into points
     Multimap<Character, Point> aminoToPoints =
-        Multimaps.transformValues(gc, codon -> codonToPoint(codon, bases));
-    System.out.println(aminoToPoints);
+        Multimaps.transformValues(gc, codon -> codonToPoint(codon, bases1, bases2, bases3));
+    //System.out.println(aminoToPoints);
 
     // determine if points within each pair are connected, or not, based on distance;
     // and build a graph
     Map<Character, UndirectedGraph<Point, DefaultEdge>> aminoToGraph =
         Maps.transformValues(aminoToPoints.asMap(), Graph::makeGraph);
-    System.out.println(aminoToGraph);
+    //System.out.println(aminoToGraph);
 
     // find number of connected components for each amino acid
     Map<Character, Integer> aminoToNumComponents =
         Maps.transformValues(aminoToGraph, Graph::numComponents);
-    System.out.println(aminoToNumComponents);
+    //System.out.println(aminoToNumComponents);
 
     // find total number of connected components
     int totalComponents = aminoToNumComponents.values().stream().mapToInt(i -> i).sum();
-    System.out.println("Total components: " + totalComponents);
+    //System.out.println("Total components: " + totalComponents);
+    if (totalComponents == 22) {
+      System.out.println(aminoToNumComponents);
+    }
+    return totalComponents;
   }
 
   private static Multimap<Character, String> theGeneticCode() {
@@ -86,10 +94,11 @@ public class Graph {
     return mm;
   }
 
-  private static Point codonToPoint(String codon, List<Character> bases) {
-    return new Point(lookup(codon.charAt(0), bases),
-        lookup(codon.charAt(1), bases),
-        lookup(codon.charAt(2), bases));
+  private static Point codonToPoint(String codon, List<Character> bases1,
+      List<Character> bases2, List<Character> bases3) {
+    return new Point(lookup(codon.charAt(0), bases1),
+        lookup(codon.charAt(1), bases2),
+        lookup(codon.charAt(2), bases3));
   }
 
   private static int lookup(char code, List<Character> perm) {
