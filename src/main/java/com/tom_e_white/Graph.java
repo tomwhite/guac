@@ -63,7 +63,11 @@ public class Graph {
     int totalComponents = aminoToNumComponents.values().stream().mapToInt(i -> i).sum();
     //System.out.println("Total components: " + totalComponents);
     if (totalComponents == 22) {
-      System.out.println(aminoToNumComponents);
+      if (bases1.equals(bases2) && bases1.equals(bases3)) {
+        System.out.println(bases1 + ", " + bases2 + ", " + bases3);
+        System.out.println(aminoToNumComponents);
+        System.out.println(aminoToPoints.get('S'));
+      }
     }
     return totalComponents;
   }
@@ -174,9 +178,16 @@ public class Graph {
     }
 
     public int distance(Point other) {
-      // this is *maximum norm*
-      return Math.max(Math.max(Math.abs(x - other.x), Math.abs(y - other.y)), Math.abs
-          (z - other.z));
+      return manhattan(this, other);
+    }
+
+    static int maximumNorm(Point p1, Point p2) {
+      return Math.max(Math.max(Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y)),
+          Math.abs(p1.z - p2.z));
+    }
+
+    static int manhattan(Point p1, Point p2) {
+      return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y) + Math.abs(p1.z - p2.z);
     }
   }
 }
